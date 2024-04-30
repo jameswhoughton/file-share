@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
 	"net/http"
 
@@ -26,7 +27,11 @@ func main() {
 		log.Fatalln(err)
 	}
 
-	migrate.Migrate(conn, migrationDir, migrationLog)
+	err = migrate.Migrate(conn, migrationDir, migrationLog)
+
+	if err != nil {
+		log.Fatalln(err)
+	}
 
 	mux := http.NewServeMux()
 
@@ -36,6 +41,8 @@ func main() {
 	http.HandleFunc("POST /file", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(404)
 	})
+
+	fmt.Println("listening on port :8000")
 
 	http.ListenAndServe(":8000", mux)
 }
