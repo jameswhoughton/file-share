@@ -1,5 +1,0 @@
-CREATE TABLE files (
-	id INT PRIMARY KEY,
-  name TEXT NOT NULL,
-	hash TEXT NOT NULL
-)

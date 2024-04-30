@@ -1,0 +1,9 @@
+CREATE TABLE users (
+	id INTEGER PRIMARY KEY,
+	email TEXT NOT NULL, 
+  	password TEXT NOT NULL,
+	salt TEXT NOT NULL,
+	api_key TEXT NULL,
+	expires_in INTEGER NOT NULL,
+	created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)

@@ -1,2 +1,3 @@
 createmigration
 *.db
+migrations/.log
