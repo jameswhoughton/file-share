@@ -1,45 +1,68 @@
 package main
 
 import (
+	"crypto/rand"
 	"database/sql"
 	"embed"
 	"fmt"
 	"html/template"
+	"io/fs"
 	"log"
 	"net/http"
 
 	"github.com/jameswhoughton/migrate"
 	"github.com/jameswhoughton/migrate/pkg/migrationLog"
 	_ "github.com/mattn/go-sqlite3"
+	"golang.org/x/crypto/bcrypt"
 )
 
 //go:embed templates/*.gohtml
 var templateFiles embed.FS
 
-func migrateDB() error {
+//go:embed static/*
+var publicFiles embed.FS
+
+func migrateDB() (*sql.DB, error) {
 	migrationDir := "migrations"
 
 	migrationLog, err := migrationLog.Init(migrationDir + "/.log")
 
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	conn, err := sql.Open("sqlite3", "file-share.db")
 
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return migrate.Migrate(conn, migrationDir, migrationLog)
+	err = migrate.Migrate(conn, migrationDir, migrationLog)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return conn, nil
+}
+
+func generateKey() string {
+	key := make([]byte, 32)
+	rand.Read(key)
+
+	return string(key)
 }
 
 func main() {
 
-	err := migrateDB()
+	conn, err := migrateDB()
 
 	if err != nil {
-		log.Fatalln(err)
+		log.Fatal(err)
+	}
+
+	userModel := UserModel{
+		db: conn,
 	}
 
 	mux := http.NewServeMux()
@@ -53,6 +76,27 @@ func main() {
 			return
 		}
 		tmpl.ExecuteTemplate(w, "layout", nil)
+	})
+
+	mux.HandleFunc("POST /register", func(w http.ResponseWriter, r *http.Request) {
+		r.ParseForm()
+
+		hash, err := bcrypt.GenerateFromPassword([]byte(r.FormValue("password")), bcrypt.MinCost)
+		if err != nil {
+			log.Println(err)
+		}
+
+		form := UserForm{
+			email:    r.FormValue("email"),
+			password: string(hash),
+			apiKey:   generateKey(),
+		}
+
+		user, err := userModel.Add(form)
+
+		if err != nil {
+			log.Fatal(err)
+		}
 	})
 
 	mux.HandleFunc("GET /file/{hash}", func(w http.ResponseWriter, r *http.Request) {
@@ -87,6 +131,16 @@ func main() {
 
 		// return 422 if the file is invalid
 	})
+
+	var staticFS = fs.FS(publicFiles)
+	htmlContent, err := fs.Sub(staticFS, "static")
+	if err != nil {
+		log.Fatal(err)
+	}
+	fs := http.StripPrefix("/static/", http.FileServer(http.FS(htmlContent)))
+
+	// Serve static files
+	mux.Handle("GET /static/", fs)
 
 	fmt.Println("listening on port :8000")
 

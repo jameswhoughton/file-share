@@ -1,8 +1,9 @@
 CREATE TABLE files (
 	id INTEGER PRIMARY KEY,
 	user_id INTEGER,
-  	name TEXT NOT NULL,
+  name TEXT NOT NULL,
 	hash TEXT NOT NULL,
+	expires_in INTEGER NOT NULL,
 	created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY(user_id) REFERENCES users(id)
+  FOREIGN KEY(user_id) REFERENCES users(id)
 )

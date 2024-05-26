@@ -1,3 +1,5 @@
 createmigration
 *.db
 migrations/.log
+static
+node_modules
