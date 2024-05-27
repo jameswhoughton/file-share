@@ -9,6 +9,7 @@ import (
 	"io/fs"
 	"log"
 	"net/http"
+	"strconv"
 
 	"github.com/jameswhoughton/migrate"
 	"github.com/jameswhoughton/migrate/pkg/migrationLog"
@@ -108,6 +109,35 @@ func main() {
 		}
 	})
 
+	mux.HandleFunc("POST /login", func(w http.ResponseWriter, r *http.Request) {
+		r.ParseForm()
+
+		hash, err := bcrypt.GenerateFromPassword([]byte(r.FormValue("password")), bcrypt.MinCost)
+		if err != nil {
+			log.Println(err)
+		}
+
+		user, err := userModel.GetWithCredentials(r.FormValue("email"), string(hash))
+
+		if err != nil {
+			http.Redirect(w, r, "/login?invalid-credentials", http.StatusFound)
+		}
+
+		userSession := http.Cookie{
+			Name:     "session",
+			Value:    strconv.Itoa(user.id),
+			Path:     "/",
+			MaxAge:   3600,
+			HttpOnly: true,
+			Secure:   true,
+			SameSite: http.SameSiteStrictMode,
+		}
+
+		http.SetCookie(w, &userSession)
+
+		http.Redirect(w, r, "/dashboard", http.StatusFound)
+	})
+
 	mux.HandleFunc("POST /register", func(w http.ResponseWriter, r *http.Request) {
 		r.ParseForm()
 
@@ -129,6 +159,17 @@ func main() {
 		}
 
 		http.Redirect(w, r, "/login?new-user", http.StatusFound)
+	})
+
+	mux.HandleFunc("GET /dashbaord/", func(w http.ResponseWriter, r *http.Request) {
+		tmpl, err := template.ParseFS(templateFiles, "templates/layout.gohtml", "templates/dashboard.gohtml")
+
+		if err != nil {
+			w.Write([]byte("Template error: " + err.Error()))
+
+			return
+		}
+		tmpl.ExecuteTemplate(w, "layout", nil)
 	})
 
 	mux.HandleFunc("GET /file/{hash}", func(w http.ResponseWriter, r *http.Request) {

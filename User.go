@@ -34,6 +34,20 @@ func (um *UserModel) Get(id int) (User, error) {
 	return user, nil
 }
 
+func (um *UserModel) GetWithCredentials(email, password string) (User, error) {
+	var user User
+
+	if err := um.db.QueryRow("SELECT * FROM users WHERE email = ? AND password = ?", email, password).Scan(&user); err != nil {
+		if err == sql.ErrNoRows {
+			return User{}, fmt.Errorf("credentials invalid")
+		}
+
+		return User{}, fmt.Errorf("error fetching user %s: %v", email, err)
+	}
+
+	return user, nil
+}
+
 func (um *UserModel) Add(user UserForm) (User, error) {
 	result, err := um.db.Exec("INSERT INTO users (email, password, api_key) VALUES (?, ?, ?)", user.email, user.password, user.apiKey)
 
