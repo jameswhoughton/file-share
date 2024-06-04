@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"strconv"
 
+	user "github.com/jameswhoughton/file-share/internal"
 	"github.com/jameswhoughton/migrate"
 	"github.com/jameswhoughton/migrate/pkg/migrationLog"
 	_ "github.com/mattn/go-sqlite3"
@@ -64,8 +65,8 @@ func main() {
 		log.Fatal(err)
 	}
 
-	userModel := UserModel{
-		db: conn,
+	userModel := user.Model{
+		Db: conn,
 	}
 
 	mux := http.NewServeMux()
@@ -119,13 +120,16 @@ func main() {
 
 		user, err := userModel.GetWithCredentials(r.FormValue("email"), string(hash))
 
+		fmt.Println(user)
+
 		if err != nil {
 			http.Redirect(w, r, "/login?invalid-credentials", http.StatusFound)
+			return
 		}
 
 		userSession := http.Cookie{
 			Name:     "session",
-			Value:    strconv.Itoa(user.id),
+			Value:    strconv.Itoa(user.Id),
 			Path:     "/",
 			MaxAge:   3600,
 			HttpOnly: true,
@@ -146,10 +150,10 @@ func main() {
 			log.Println(err)
 		}
 
-		form := UserForm{
-			email:    r.FormValue("email"),
-			password: string(hash),
-			apiKey:   generateKey(),
+		form := user.Form{
+			Email:    r.FormValue("email"),
+			Password: string(hash),
+			ApiKey:   generateKey(),
 		}
 
 		_, err = userModel.Add(form)
