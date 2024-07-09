@@ -29,19 +29,19 @@ type messageKey string
 func migrateDB() (*sql.DB, error) {
 	migrationDir := "migrations"
 
-	migrationLog, err := migrationLog.Init(migrationDir + "/.log")
-
-	if err != nil {
-		return nil, err
-	}
-
 	conn, err := sql.Open("sqlite3", "file-share.db")
 
 	if err != nil {
 		return nil, err
 	}
 
-	err = migrate.Migrate(conn, migrationDir, migrationLog)
+	migrationLog, err := migrationLog.NewLogSQLite(conn)
+
+	if err != nil {
+		return nil, err
+	}
+
+	err = migrate.Migrate(conn, migrationDir, &migrationLog)
 
 	if err != nil {
 		return nil, err
@@ -65,9 +65,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	userModel := user.Model{
-		Db: conn,
-	}
+	userModel := user.NewUserModel(conn)
 
 	mux := http.NewServeMux()
 
@@ -113,12 +111,7 @@ func main() {
 	mux.HandleFunc("POST /login", func(w http.ResponseWriter, r *http.Request) {
 		r.ParseForm()
 
-		hash, err := bcrypt.GenerateFromPassword([]byte(r.FormValue("password")), bcrypt.MinCost)
-		if err != nil {
-			log.Println(err)
-		}
-
-		user, err := userModel.GetWithCredentials(r.FormValue("email"), string(hash))
+		user, err := userModel.GetWithCredentials(r.FormValue("email"), string(r.FormValue("password")))
 
 		fmt.Println(user)
 
