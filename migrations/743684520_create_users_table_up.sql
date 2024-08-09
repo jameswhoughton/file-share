@@ -1,7 +1,7 @@
 CREATE TABLE users (
 	id INTEGER PRIMARY KEY,
 	email TEXT NOT NULL, 
-  password TEXT NOT NULL,
+    password TEXT NOT NULL,
 	api_key TEXT NULL,
 	created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 )
