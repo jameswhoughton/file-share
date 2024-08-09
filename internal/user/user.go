@@ -41,6 +41,20 @@ func (um *Model) Get(id int) (User, error) {
 	return user, nil
 }
 
+func (um *Model) GetFromSessionId(sessionId string) (User, error) {
+	var user User
+
+	if err := um.db.QueryRow("SELECT u.id, u.email, u.password FROM sessions s LEFT JOIN users u ON s.user_id = u.id WHERE session_id = ?", sessionId).Scan(&user.Id, &user.Email, &user.password); err != nil {
+		if err == sql.ErrNoRows {
+			return User{}, fmt.Errorf("session ID invalid")
+		}
+
+		return User{}, fmt.Errorf("error fetching user: %v", err)
+	}
+
+	return user, nil
+}
+
 func (um *Model) GetWithCredentials(email, password string) (User, error) {
 	var user User
 
