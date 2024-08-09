@@ -4,14 +4,15 @@ import (
 	"crypto/rand"
 	"database/sql"
 	"embed"
+	"errors"
 	"fmt"
 	"html/template"
 	"io/fs"
 	"log"
 	"net/http"
-	"strconv"
 
-	user "github.com/jameswhoughton/file-share/internal"
+	"github.com/jameswhoughton/file-share/internal/session"
+	"github.com/jameswhoughton/file-share/internal/user"
 	"github.com/jameswhoughton/migrate"
 	"github.com/jameswhoughton/migrate/pkg/migrationLog"
 	_ "github.com/mattn/go-sqlite3"
@@ -64,8 +65,25 @@ func main() {
 	}
 
 	userModel := user.NewUserModel(conn)
+	sessionModel := session.NewSessionModel(conn)
 
 	mux := http.NewServeMux()
+
+	mux.HandleFunc("GET /", func(w http.ResponseWriter, r *http.Request) {
+		_, err := r.Cookie("session")
+
+		if err != nil {
+			switch {
+			case errors.Is(err, http.ErrNoCookie):
+				http.Redirect(w, r, "/login", http.StatusFound)
+			default:
+				log.Println(err)
+				http.Error(w, "server error", http.StatusInternalServerError)
+			}
+			return
+		}
+
+	})
 
 	mux.HandleFunc("GET /register", func(w http.ResponseWriter, r *http.Request) {
 		tmpl, err := template.ParseFS(templateFiles, "templates/layout.gohtml", "templates/register.gohtml")
@@ -92,9 +110,19 @@ func main() {
 			return
 		}
 
+		session, err := sessionModel.Add(session.Session{
+			UserId:    user.Id,
+			SessionId: generateKey(),
+		})
+
+		if err != nil {
+			w.WriteHeader(500)
+			return
+		}
+
 		userSession := http.Cookie{
 			Name:     "session",
-			Value:    strconv.Itoa(user.Id),
+			Value:    session.SessionId,
 			Path:     "/",
 			MaxAge:   3600,
 			HttpOnly: true,
@@ -130,8 +158,8 @@ func main() {
 		http.Redirect(w, r, "/login?new-user", http.StatusFound)
 	})
 
-	mux.HandleFunc("GET /dashbaord/", func(w http.ResponseWriter, r *http.Request) {
-		tmpl, err := template.ParseFS(templateFiles, "templates/layout.gohtml", "templates/dashboard.gohtml")
+	mux.HandleFunc("GET /dashboard", func(w http.ResponseWriter, r *http.Request) {
+		tmpl, err := template.ParseFS(templateFiles, "templates/layout.gohtml", "templates/sidebar.gohtml", "templates/dashboard.gohtml")
 
 		if err != nil {
 			w.Write([]byte("Template error: " + err.Error()))
