@@ -2,6 +2,8 @@ github.com/jameswhoughton/migrate v0.0.0-20240430191118-3722609388cf h1:p82JJr3v
 github.com/jameswhoughton/migrate v0.0.0-20240430191118-3722609388cf/go.mod h1:bv8rfupOcAvS1gzRBcEFnFKvlLPgGH34Pt4cuQbWbcw=
 github.com/jameswhoughton/migrate v0.0.0-20240707202222-930eae3b0623 h1:0LSfFLxXXxxzuuN+sG1ZQxjfPhJeJMmqZeJqW3M91eE=
 github.com/jameswhoughton/migrate v0.0.0-20240707202222-930eae3b0623/go.mod h1:IuxtIwTcEtBlMpOR4pSZGpyFm1TvzZShheRrJhcTqvU=
+github.com/jameswhoughton/migrate v0.0.0-20240818151148-6f8fd125f67b h1:AO7Ed7YLvGlooKMeqpjilN4u/HknlDHDfRWVGrdP8No=
+github.com/jameswhoughton/migrate v0.0.0-20240818151148-6f8fd125f67b/go.mod h1:MQvgNQq4B2MtTzPFSYSU4fldbEXAjNQziN6j+Tf4Rj0=
 github.com/mattn/go-sqlite3 v1.14.22 h1:2gZY6PC6kBnID23Tichd1K+Z0oS6nE/XwU+Vz/5o4kU=
 github.com/mattn/go-sqlite3 v1.14.22/go.mod h1:Uh1q+B4BYcTPb+yiD3kU8Ct7aC0hY9fxUwlHK0RXw+Y=
 golang.org/x/crypto v0.22.0 h1:g1v0xeRhjcugydODzvb3mEM9SQ0HGp9s/nh3COQ/C30=
