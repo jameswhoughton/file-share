@@ -1,6 +1,6 @@
 module github.com/jameswhoughton/file-share
 
-go 1.22.0
+go 1.23.0
 
 require (
 	github.com/jameswhoughton/migrate v0.0.0-20240818151148-6f8fd125f67b // indirect
