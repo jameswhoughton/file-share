@@ -1,7 +1,28 @@
-{{define "side"}}
-Sidebar
-{{end}}
-
 {{define "content"}}
-<h1>Account</h1>
+<div class="bg-slate-700 p-6 rounded-lg shadow-md">
+    <h1 class="text-xl mb-6">Update Your Details</h1>
+    <form method="put" action="/account" class="mb-0">
+        <div class="flex flex-col gap-1 mb-3">
+            <label class="text-sm text-slate-300" for="email">email</label>
+            <input class="py-2 px-1.5 rounded-md bg-slate-500 w-[250px]" type="text" name="email" />
+        </div>
+        <div class="flex flex-col gap-1 mb-3">
+            <label class="text-sm text-slate-300" for="password">password</label>
+            <input class="py-2 px-1.5 rounded-md bg-slate-500 w-[250px]" type="password" name="password" />
+        </div>
+        <div class="flex flex-col gap-1 mb-3">
+            <label class="text-sm text-slate-300" for="password">confirm password</label>
+            <input class="py-2 px-1.5 rounded-md bg-slate-500 w-[250px]" type="password" name="password" />
+        </div>
+        <button class="py-2 px-1.5 rounded-md bg-cyan-600 hover:bg-cyan-700 transition-colors w-auto"
+            type="submit">Update</button>
+    </form>
+    <hr class="border border-b border-slate-400 my-6" />
+    <div class="flex flex-col gap-1 mt-3">
+        <label class="text-sm text-slate-300">API Key</label>
+        <div class="text-lg py-3 px-4 bg-slate-500 rounded-md text-center">
+            {{.ApiKey}}
+        </div>
+    </div>
+</div>
 {{end}}
