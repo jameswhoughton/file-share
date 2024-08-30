@@ -33,7 +33,7 @@ func (us *UserService) Get(id int) (file_share.User, error) {
 func (us *UserService) GetFromSessionId(sessionId string) (file_share.User, error) {
 	var user file_share.User
 
-	if err := us.db.QueryRow("SELECT u.id, u.email, u.password FROM sessions s LEFT JOIN users u ON s.user_id = u.id WHERE session_id = ?", sessionId).Scan(&user.Id, &user.Email, &user.Password); err != nil {
+	if err := us.db.QueryRow("SELECT u.id, u.email, u.password, u.api_key FROM sessions s LEFT JOIN users u ON s.user_id = u.id WHERE session_id = ?", sessionId).Scan(&user.Id, &user.Email, &user.Password, &user.ApiKey); err != nil {
 		if err == sql.ErrNoRows {
 			return file_share.User{}, fmt.Errorf("session ID invalid")
 		}
@@ -47,7 +47,7 @@ func (us *UserService) GetFromSessionId(sessionId string) (file_share.User, erro
 func (us *UserService) GetWithCredentials(email, password string) (file_share.User, error) {
 	var user file_share.User
 
-	if err := us.db.QueryRow("SELECT id, email, password FROM users WHERE email = ?", email).Scan(&user.Id, &user.Email, &user.Password); err != nil {
+	if err := us.db.QueryRow("SELECT id, email, password, api_key FROM users WHERE email = ?", email).Scan(&user.Id, &user.Email, &user.Password, &user.ApiKey); err != nil {
 		if err == sql.ErrNoRows {
 			return file_share.User{}, fmt.Errorf("credentials invalid")
 		}
