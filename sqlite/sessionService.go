@@ -3,6 +3,7 @@ package sqlite
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 
 	file_share "github.com/jameswhoughton/file-share"
 )
@@ -31,6 +32,16 @@ func (ss *SessionService) Add(session file_share.Session) (file_share.Session, e
 	session.Id = int(id)
 
 	return session, nil
+}
+
+func (ss *SessionService) Destroy(sessionId string) error {
+	_, err := ss.db.Exec("DELETE FROM sessions WHERE session_id = ?", sessionId)
+
+	if err != nil {
+		return fmt.Errorf("could not destroy session: %v", err)
+	}
+
+	return nil
 }
 
 func (ss *SessionService) IsValid(sessionId string) bool {

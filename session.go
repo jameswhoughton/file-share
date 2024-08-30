@@ -20,5 +20,6 @@ type Session struct {
 
 type SessionService interface {
 	Add(session Session) (Session, error)
+	Destroy(sessionId string) error
 	IsValid(sessionId string) bool
 }
