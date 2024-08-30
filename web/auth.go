@@ -8,7 +8,6 @@ import (
 	"net/http"
 
 	file_share "github.com/jameswhoughton/file-share"
-	"golang.org/x/crypto/bcrypt"
 )
 
 func getLoginHandler(templateFiles fs.FS) http.Handler {
@@ -24,10 +23,12 @@ func getLoginHandler(templateFiles fs.FS) http.Handler {
 			Title   string
 			Message string
 		}
-		var message string
 
-		if r.URL.Query().Has("new-user") {
-			message = "Your account has been created, please login"
+		message, err := getMessage(w, r, "message")
+
+		if err != nil {
+			log.Println(err)
+			http.Error(w, "server error", http.StatusInternalServerError)
 		}
 
 		err = tmpl.ExecuteTemplate(w, "layout", loginData{
@@ -48,7 +49,8 @@ func postLoginHandler(userService file_share.UserService, sessionService file_sh
 		user, err := userService.GetWithCredentials(r.FormValue("email"), string(r.FormValue("password")))
 
 		if err != nil {
-			http.Redirect(w, r, "/login?invalid-credentials", http.StatusFound)
+			setMessage(w, "message", "credentials are invalid")
+			http.Redirect(w, r, "/login", http.StatusFound)
 			return
 		}
 
@@ -75,45 +77,39 @@ func postLoginHandler(userService file_share.UserService, sessionService file_sh
 
 		http.SetCookie(w, &userSession)
 
-		http.Redirect(w, r, "/dashboard", http.StatusFound)
+		http.Redirect(w, r, "/account", http.StatusFound)
 	})
 }
 
-func getRegistrationHandler(templateFiles fs.FS) http.Handler {
+func getLogoutHandler(sessionService file_share.SessionService) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		tmpl, err := template.ParseFS(templateFiles, "templates/layout.gohtml", "templates/form.gohtml", "templates/register.gohtml")
+		currentSesion, err := r.Cookie("session")
 
-		if err != nil {
-			w.Write([]byte("Template error: " + err.Error()))
-
-			return
-		}
-		tmpl.ExecuteTemplate(w, "layout", nil)
-	})
-}
-
-func postRegistrationHandler(userService file_share.UserService) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		r.ParseForm()
-
-		hash, err := bcrypt.GenerateFromPassword([]byte(r.FormValue("password")), bcrypt.MinCost)
 		if err != nil {
 			log.Println(err)
+			http.Error(w, "server error", http.StatusInternalServerError)
 		}
 
-		user := file_share.User{
-			Email:    r.FormValue("email"),
-			Password: string(hash),
-			ApiKey:   file_share.GenerateKey(),
-		}
-
-		_, err = userService.Add(user)
+		err = sessionService.Destroy(currentSesion.Value)
 
 		if err != nil {
-			log.Fatal(err)
+			log.Println(err)
+			http.Error(w, "server error", http.StatusInternalServerError)
 		}
 
-		http.Redirect(w, r, "/login?new-user", http.StatusFound)
+		userSession := http.Cookie{
+			Name:     "session",
+			Value:    "",
+			Path:     "/",
+			MaxAge:   -1,
+			HttpOnly: true,
+			Secure:   true,
+			SameSite: http.SameSiteStrictMode,
+		}
+
+		http.SetCookie(w, &userSession)
+
+		http.Redirect(w, r, "/login", http.StatusFound)
 	})
 }
 

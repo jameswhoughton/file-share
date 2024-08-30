@@ -52,7 +52,8 @@ func AddRoutes(
 	mux.Handle("POST /login", postLoginHandler(userService, sessionService))
 	mux.Handle("GET /register", getRegistrationHandler(templateFiles))
 	mux.Handle("POST /register", postRegistrationHandler(userService))
+	mux.Handle("GET /logout", getLogoutHandler(sessionService))
 
 	// Account
-	mux.Handle("GET /account", isAuthed(getAccountHandler(templateFiles)))
+	mux.Handle("GET /account", isAuthed(getAccountHandler(templateFiles, userService)))
 }
