@@ -56,4 +56,5 @@ func AddRoutes(
 
 	// Account
 	mux.Handle("GET /account", isAuthed(getAccountHandler(templateFiles, userService)))
+	mux.Handle("POST /account", isAuthed(putAccountHandler(userService)))
 }

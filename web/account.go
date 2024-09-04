@@ -1,6 +1,8 @@
 package web
 
 import (
+	"encoding/json"
+	"fmt"
 	"html/template"
 	"io/fs"
 	"log"
@@ -73,14 +75,39 @@ func getAccountHandler(templateFiles fs.FS, userService file_share.UserService) 
 			log.Println(err)
 			http.Error(w, "server error", http.StatusInternalServerError)
 		}
+
 		type templateData struct {
-			Title  string
-			ApiKey string
+			Title   string
+			Email   string
+			ApiKey  string
+			Success string
+			Errors  formErrors
 		}
 
+		success, err := getMessage(w, r, "success")
+
+		if err != nil {
+			log.Println(err)
+			http.Error(w, "server error", http.StatusInternalServerError)
+		}
+
+		errorJson, err := getMessage(w, r, "errors")
+
+		if err != nil {
+			log.Println(err)
+			http.Error(w, "server error", http.StatusInternalServerError)
+		}
+
+		formErrors := formErrors{}
+
+		json.Unmarshal([]byte(errorJson), &formErrors)
+
 		err = tmpl.ExecuteTemplate(w, "layout", templateData{
-			Title:  "My Account",
-			ApiKey: user.ApiKey,
+			Title:   "My Account",
+			Email:   user.Email,
+			ApiKey:  user.ApiKey,
+			Success: success,
+			Errors:  formErrors,
 		})
 
 		if err != nil {
@@ -89,24 +116,104 @@ func getAccountHandler(templateFiles fs.FS, userService file_share.UserService) 
 	})
 }
 
+type formErrors struct {
+	Password string `json:"password"`
+	Email    string `json:"email"`
+}
+
+type userForm struct {
+	password        string
+	passwordConfirm string
+	email           string
+	errors          formErrors
+}
+
+func (uf *userForm) isValid(currentUser file_share.User, userService file_share.UserService) bool {
+	fmt.Printf("%s - %s\n", uf.password, uf.passwordConfirm)
+
+	if uf.password != uf.passwordConfirm {
+		uf.errors.Password = "password and confirm do not match"
+
+		return false
+	}
+
+	if currentUser.Email == uf.email {
+		return true
+	}
+
+	existingUser, _ := userService.GetFromEmail(uf.email)
+
+	if existingUser.Id > 0 {
+		uf.errors.Email = "email already in use"
+
+		return false
+	}
+
+	return true
+}
+
 func putAccountHandler(userService file_share.UserService) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		session, err := r.Cookie("session")
+
+		if err != nil {
+			log.Println(err)
+			http.Error(w, "server error", http.StatusInternalServerError)
+
+			return
+		}
+
+		user, err := userService.GetFromSessionId(session.Value)
+
+		if err != nil {
+			log.Println(err)
+			http.Error(w, "server error", http.StatusInternalServerError)
+
+			return
+		}
+
 		r.ParseForm()
 
-		// if r.FormValue("password") != "" && r.FormValue("password") != r.FormValue("passwordConfirm") {
+		form := userForm{
+			password:        r.FormValue("password"),
+			passwordConfirm: r.FormValue("passwordConfirm"),
+			email:           r.FormValue("email"),
+		}
 
-		// 	http.Redirect()
-		// }
+		if !form.isValid(user, userService) {
+			errorJson, _ := json.Marshal(form.errors)
+			setMessage(w, "errors", string(errorJson))
 
-		// hash, err := bcrypt.GenerateFromPassword([]byte(r.FormValue("password")), bcrypt.MinCost)
-		// if err != nil {
-		// 	log.Println(err)
-		// }
+			http.Redirect(w, r, "/account", http.StatusFound)
 
-		// user := file_share.User{
-		// 	Email:    r.FormValue("email"),
-		// 	Password: string(hash),
-		// 	ApiKey:   file_share.GenerateKey(),
-		// }
+			return
+		}
+
+		if form.password != "" {
+			hash, err := bcrypt.GenerateFromPassword([]byte(form.password), bcrypt.MinCost)
+			if err != nil {
+				log.Println(err)
+			}
+
+			err = userService.UpdatePassword(user, string(hash))
+
+			if err != nil {
+				log.Println(err)
+				http.Error(w, "server error", http.StatusInternalServerError)
+			}
+		}
+
+		if user.Email != form.email {
+			err = userService.UpdateEmail(user, form.email)
+
+			if err != nil {
+				log.Println(err)
+				http.Error(w, "server error", http.StatusInternalServerError)
+			}
+		}
+
+		setMessage(w, "success", "you account has been updated")
+
+		http.Redirect(w, r, "/account", http.StatusFound)
 	})
 }
