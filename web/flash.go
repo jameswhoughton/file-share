@@ -1,11 +1,14 @@
 package web
 
-import "net/http"
+import (
+	"encoding/base64"
+	"net/http"
+)
 
 func setMessage(w http.ResponseWriter, name, value string) {
 	mesageCookie := http.Cookie{
 		Name:  name,
-		Value: value,
+		Value: base64.StdEncoding.EncodeToString([]byte(value)),
 	}
 
 	http.SetCookie(w, &mesageCookie)
@@ -29,5 +32,7 @@ func getMessage(w http.ResponseWriter, r *http.Request, name string) (string, er
 
 	http.SetCookie(w, &clearCookie)
 
-	return messageCookie.Value, nil
+	decodedValue, _ := base64.URLEncoding.DecodeString(messageCookie.Value)
+
+	return string(decodedValue), nil
 }
