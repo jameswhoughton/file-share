@@ -10,6 +10,9 @@ type User struct {
 type UserService interface {
 	Get(id int) (User, error)
 	GetFromSessionId(sessionId string) (User, error)
-	GetWithCredentials(email, password string) (User, error)
+	GetFromCredentials(email, password string) (User, error)
+	GetFromEmail(email string) (User, error)
 	Add(user User) (User, error)
+	UpdateEmail(user User, email string) error
+	UpdatePassword(user User, password string) error
 }

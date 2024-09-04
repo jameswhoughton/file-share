@@ -44,7 +44,23 @@ func (us *UserService) GetFromSessionId(sessionId string) (file_share.User, erro
 	return user, nil
 }
 
-func (us *UserService) GetWithCredentials(email, password string) (file_share.User, error) {
+func (us *UserService) GetFromCredentials(email, password string) (file_share.User, error) {
+	user, err := us.GetFromEmail(email)
+
+	if err != nil {
+		return user, err
+	}
+
+	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
+
+	if err != nil {
+		return file_share.User{}, fmt.Errorf("credentials invalid")
+	}
+
+	return user, nil
+}
+
+func (us *UserService) GetFromEmail(email string) (file_share.User, error) {
 	var user file_share.User
 
 	if err := us.db.QueryRow("SELECT id, email, password, api_key FROM users WHERE email = ?", email).Scan(&user.Id, &user.Email, &user.Password, &user.ApiKey); err != nil {
@@ -53,12 +69,6 @@ func (us *UserService) GetWithCredentials(email, password string) (file_share.Us
 		}
 
 		return file_share.User{}, fmt.Errorf("error fetching user %s: %v", email, err)
-	}
-
-	err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
-
-	if err != nil {
-		return file_share.User{}, fmt.Errorf("credentials invalid")
 	}
 
 	return user, nil
@@ -81,4 +91,32 @@ func (us *UserService) Add(user file_share.User) (file_share.User, error) {
 		Id:    int(id),
 		Email: user.Email,
 	}, nil
+}
+
+func (us *UserService) UpdateEmail(user file_share.User, email string) error {
+	if email == user.Email {
+		return nil
+	}
+
+	_, err := us.db.Exec("UPDATE users SET email = ? WHERE id = ?", email, user.Id)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (us *UserService) UpdatePassword(user file_share.User, hash string) error {
+	if hash == user.Password {
+		return nil
+	}
+
+	_, err := us.db.Exec("UPDATE users SET password = ? WHERE id = ?", hash, user.Id)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
