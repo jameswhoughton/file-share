@@ -21,19 +21,30 @@ func getLoginHandler(templateFiles fs.FS) http.Handler {
 		}
 		type loginData struct {
 			Title   string
-			Message string
+			Error   string
+			Success string
 		}
 
-		message, err := getMessage(w, r, "message")
+		errorMessage, err := getMessage(w, r, "error")
 
 		if err != nil {
 			log.Println(err)
-			http.Error(w, "server error", http.StatusInternalServerError)
+
+			errorMessage = "There was a problem with your request, please try again"
+		}
+
+		successMessage, err := getMessage(w, r, "success")
+
+		if err != nil {
+			log.Println(err)
+
+			errorMessage = "There was a problem with your request, please try again"
 		}
 
 		err = tmpl.ExecuteTemplate(w, "layout", loginData{
 			Title:   "Login",
-			Message: message,
+			Error:   errorMessage,
+			Success: successMessage,
 		})
 
 		if err != nil {
@@ -46,10 +57,10 @@ func postLoginHandler(userService file_share.UserService, sessionService file_sh
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		r.ParseForm()
 
-		user, err := userService.GetWithCredentials(r.FormValue("email"), string(r.FormValue("password")))
+		user, err := userService.GetFromCredentials(r.FormValue("email"), string(r.FormValue("password")))
 
 		if err != nil {
-			setMessage(w, "message", "credentials are invalid")
+			setMessage(w, "error", "credentials are invalid")
 			http.Redirect(w, r, "/login", http.StatusFound)
 			return
 		}
