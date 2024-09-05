@@ -1,6 +1,7 @@
 package web
 
 import (
+	"encoding/base64"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -19,8 +20,10 @@ func TestSetMessageAddsCookieWithMessageToResponse(t *testing.T) {
 		t.Fatalf("expected 1 cookie, got %d", len(cookies))
 	}
 
-	if cookies[0].Value != cookieValue {
-		t.Fatalf("expected %s got %s", cookieValue, cookies[0].Value)
+	encodedCookieValue := base64.StdEncoding.EncodeToString([]byte(cookieValue))
+
+	if cookies[0].Value != encodedCookieValue {
+		t.Fatalf("expected %s got %s", encodedCookieValue, cookies[0].Value)
 	}
 }
 
@@ -33,7 +36,7 @@ func TestGetMessageRetrievesMessageAndRemovesCookie(t *testing.T) {
 
 	request.AddCookie(&http.Cookie{
 		Name:  cookieKey,
-		Value: cookieValue,
+		Value: base64.StdEncoding.EncodeToString([]byte(cookieValue)),
 	})
 
 	message, err := getMessage(response, request, cookieKey)

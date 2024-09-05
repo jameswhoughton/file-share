@@ -5,19 +5,19 @@
     <div class="py-2 px-3 bg-green-200 text-slate-900">{{.Success}}</div>
     {{end}}
     <form method="post" action="/account" class="mb-0">
-        <div class="flex flex-col gap-1 mb-3">
+        <div class="flex flex-col gap-2 mb-4">
             <label class="text-sm text-slate-300" for="email">email</label>
             <input class="py-2 px-1.5 rounded bg-zinc-700 ring-1 ring-zinc-400 w-[250px]" type="text" name="email"
                 value="{{.Email}}" />
             {{if .Errors.Email}}<div class="text-sm text-red-400">{{.Errors.Email}}</div>{{end}}
         </div>
-        <div class="flex flex-col gap-1 mb-3">
+        <div class="flex flex-col gap-2 mb-4">
             <label class="text-sm text-slate-300" for="password">password</label>
             <input class="py-2 px-1.5 rounded bg-zinc-700 ring-1 ring-zinc-400 w-[250px]" type="password"
                 name="password" />
             {{if .Errors.Password}}<div class="text-sm text-red-400">{{.Errors.Password}}</div>{{end}}
         </div>
-        <div class="flex flex-col gap-1 mb-3">
+        <div class="flex flex-col gap-2 mb-4">
             <label class="text-sm text-slate-300" for="passwordConfirm">confirm password</label>
             <input class="py-2 px-1.5 rounded bg-zinc-700 ring-1 ring-zinc-400 w-[250px]" type="password"
                 name="passwordConfirm" />
@@ -26,11 +26,9 @@
             type="submit">Update</button>
     </form>
     <hr class="border border-b border-zinc-400 my-6" />
-    <div class="flex flex-col gap-1 mt-3">
+    <div class="flex flex-col gap-2 mt-4">
         <label class="text-sm text-zinc-300">API Key</label>
-        <div class="text-lg py-3 px-4 rounded bg-zinc-700 ring-1 ring-zinc-400 text-center">
-            {{.ApiKey}}
-        </div>
+        <div class="text-lg py-3 px-4 rounded bg-zinc-700 ring-1 ring-zinc-400 text-center">{{.ApiKey}}</div>
     </div>
 </div>
 {{end}}
