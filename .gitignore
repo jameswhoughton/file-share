@@ -1,4 +1,5 @@
 createmigration
+file_share_server
 *.db
 migrations/.log
 static
