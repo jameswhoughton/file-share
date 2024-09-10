@@ -2,7 +2,6 @@ package web
 
 import (
 	"encoding/json"
-	"fmt"
 	"html/template"
 	"io/fs"
 	"log"
@@ -46,7 +45,7 @@ func postRegistrationHandler(userService file_share.UserService) http.Handler {
 			log.Fatal(err)
 		}
 
-		setMessage(w, "message", "Your account has been created, please login below")
+		setMessage(w, "success", "Your account has been created, please login below")
 
 		http.Redirect(w, r, "/login", http.StatusFound)
 	})
@@ -129,8 +128,6 @@ type userForm struct {
 }
 
 func (uf *userForm) isValid(currentUser file_share.User, userService file_share.UserService) bool {
-	fmt.Printf("%s - %s\n", uf.password, uf.passwordConfirm)
-
 	if uf.password != uf.passwordConfirm {
 		uf.errors.Password = "password and confirm do not match"
 

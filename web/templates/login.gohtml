@@ -1,11 +1,11 @@
 {{define "yield"}}
+<h1 class="text-xl mb-6 text-center">Login</h1>
 {{if .Success}}
 <div class="px-3 py-2 mb-2 bg-green-500 border border-green-600 rounded text-black">{{.Success}}</div>
 {{end}}
 {{if .Error}}
 <div class="px-3 py-2 mb-2 bg-red-500 border border-red-600 rounded text-black">{{.Error}}</div>
 {{end}}
-<h1 class="text-xl mb-6 text-center">Login</h1>
 <form method="post" action="/login" class="flex flex-col gap-4 mb-0">
     <div class="flex flex-col gap-1">
         <label class="text-sm text-slate-300" for="email">email</label>
